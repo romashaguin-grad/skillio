@@ -1,22 +1,13 @@
 "use client";
 
+import { Suspense } from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
-import { useSearchParams } from "next/navigation";
 
-function getErrorMessage(err: unknown, fallback: string) {
-  if (typeof err === "object" && err !== null && "response" in err) {
-    const response = (err as { response?: { data?: { detail?: string } } }).response;
-    return response?.data?.detail || fallback;
-  }
-
-  return fallback;
-}
-
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
   const searchParams = useSearchParams();
@@ -40,14 +31,13 @@ export default function RegisterPage() {
     try {
       const res = await api.post("/auth/register", form);
       setAuth(res.data.access_token, res.data.role, res.data.full_name);
-
       if (res.data.role === "recruiter") {
         router.push("/recruiter");
       } else {
         router.push("/dashboard");
       }
-    } catch (err: unknown) {
-      setError(getErrorMessage(err, "Registration failed"));
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -57,14 +47,13 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <Link href="/" className="text-3xl font-bold text-white hover:text-[#ED80E9] transition">Skillio</Link>
+          <Link href="/" className="text-3xl font-bold text-white hover:text-[#ED80E9] transition">
+            Skillio
+          </Link>
           <p className="text-gray-400 mt-2">Create your account</p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-gray-900 rounded-2xl p-8 space-y-5 border border-gray-800"
-        >
+        <form onSubmit={handleSubmit} className="bg-gray-900 rounded-2xl p-8 space-y-5 border border-gray-800">
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-4 py-3 text-sm">
               {error}
@@ -140,5 +129,13 @@ export default function RegisterPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   );
 }
