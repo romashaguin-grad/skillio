@@ -8,10 +8,12 @@ from sqlalchemy.orm import sessionmaker
 from main import app
 from database import Base, get_db
 
+# In CI, DATABASE_URL points to jobboard_test directly
+# Locally, we use the db hostname
 TEST_DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql+asyncpg://postgres:postgres@db:5432/jobboard_test"
-).replace("/jobboard", "/jobboard_test")
+)
 
 
 @pytest_asyncio.fixture(scope="function")
