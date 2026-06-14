@@ -49,4 +49,5 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           SECRET_KEY: test-secret-key
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/jobboard_test
+          TESTING: "true"
         run: python -m pytest tests/ -v

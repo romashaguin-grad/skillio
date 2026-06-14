@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel, EmailStr
 import uuid
+import os
 
 from database import get_db
 from auth import hash_password, verify_password, create_access_token, get_current_user
@@ -14,6 +15,11 @@ from slowapi.util import get_remote_address
 from fastapi import Request
 
 limiter = Limiter(key_func=get_remote_address)
+
+def get_limit():
+    if os.getenv("TESTING") == "true":
+        return "1000/minute"
+    return "10/minute"
 
 router = APIRouter()
 
@@ -42,7 +48,7 @@ class UserResponse(BaseModel):
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-@limiter.limit("10/minute")
+@limiter.limit(get_limit())
 async def register(request: Request, body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(models.User).where(models.User.email == body.email))
     if result.scalar_one_or_none():
@@ -57,7 +63,6 @@ async def register(request: Request, body: RegisterRequest, db: AsyncSession = D
     db.add(user)
     await db.flush()
 
-    # Create empty candidate profile if registering as candidate
     if body.role == models.UserRole.candidate:
         profile = models.CandidateProfile(user_id=user.id)
         db.add(profile)
@@ -74,7 +79,7 @@ async def register(request: Request, body: RegisterRequest, db: AsyncSession = D
 
 
 @router.post("/login", response_model=TokenResponse)
-@limiter.limit("10/minute")
+@limiter.limit(get_limit())
 async def login(request: Request, form: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(models.User).where(models.User.email == form.username))
     user = result.scalar_one_or_none()
