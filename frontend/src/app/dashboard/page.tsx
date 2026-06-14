@@ -427,9 +427,7 @@ export default function DashboardPage() {
           <div className="space-y-4">
             {displayJobs.length === 0 && (
               <div className="text-center text-gray-500 py-12">
-                {activeTab === "recommended"
-                  ? "Upload your resume to get personalized recommendations."
-                  : "No jobs found."}
+                No jobs found.
               </div>
             )}
             {displayJobs.map((job) => (
